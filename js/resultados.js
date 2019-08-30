@@ -44,14 +44,9 @@ var Resultados = new Phaser.Class({
 
     create: function ()
     {
-
 		// --- componentes da tela ---
-
 	    this.fundo = this.add.image(487, 775, 'fundo');
-	    const btoVoltar = this.add.image(500, 1300, 'btVoltar', { fill: '#0f0' })
-    	  .setInteractive()
-	      .on('pointerdown', () => this.doVoltar() );
-	      
+	    const btoVoltar = this.add.image(500, 1300, 'btVoltar', { fill: '#0f0' }).setInteractive().on('pointerdown', () => this.doVoltar() );
 	    this.grpCaminhadas = this.add.group();       
 	    this.grpEducativo  = this.add.group();
 	    //this.cursores = this.input.keyboard.createCursorKeys();
@@ -63,7 +58,9 @@ var Resultados = new Phaser.Class({
 		var arrDBData     = dbData.split('|'); // registros separados por dia
 		var arrDBCoor     = dbCoor.split('|');
 
-		var x1           = 1;
+		var x1        = 1;
+	    ponteiro      = 1;
+	    qtdCaminhadas = 0;
 		do {
 			//--- analisa o percurso e calcula tempo, distância e velocidade média ---
     		var datafim      = '';
@@ -178,10 +175,20 @@ var Resultados = new Phaser.Class({
     
     mostraResultados: function ()
     {
+		// --- variáveis para posicionamento na tela ---
+		//var pagina       = 975;
+		posImg       = 285;
+		posTxt       = 450;
+		posPorc      = 420;
+		posCoracao   = 285;
+		posPulmao    = 485;
+		posBalanca   = 685;
+		
     	// --- mostra os resultados na tela separados por data, finalizando com as projeções ---
 		for (y = 0; y < arrResultados.length; y++ ) {
+			var mesAjustado = arrResultados[y][0].getMonth()+1;
 			eval('var Destaque' + y + ' = this.add.image(' + posImg + ', 650, "iHealth");');
-			eval('var Texto' + y + ' = this.add.text(' + posTxt + ', 450, "Data: ' + arrResultados[y][0].getDate() + '/' + arrResultados[y][0].getMonth() + '/' + arrResultados[y][0].getFullYear() + ' \\n\\nDistância: ' + parseFloat(arrResultados[y][1]).toFixed(2) + ' m\\n\\nTempo: ' + arrResultados[y][2] + ' h ' + arrResultados[y][3] +' m\\n\\nVelocidade: ' + arrResultados[y][4] + ' k/h\\n\\nGasto calórico: ' + arrResultados[y][5] + '", infos);');
+			eval('var Texto' + y + ' = this.add.text(' + posTxt + ', 450, "Data: ' + arrResultados[y][0].getDate() + '/' + mesAjustado + '/' + arrResultados[y][0].getFullYear() + ' \\n\\nDistância: ' + parseFloat(arrResultados[y][1]).toFixed(2) + ' m\\n\\nTempo: ' + arrResultados[y][2] + ' h ' + arrResultados[y][3] +' m\\n\\nVelocidade: ' + arrResultados[y][4] + ' k/h\\n\\nGasto calórico: ' + arrResultados[y][5] + '", infos);');
 			eval('var Coracao' + y + ' = this.add.image(' + posCoracao + ', 950, "coracao");');
 			eval('var Pulmao' + y + ' = this.add.image(' + posPulmao + ', 950, "pulmao");');
 			eval('var Balanca' + y + ' = this.add.image(' + posBalanca + ', 950, "balanca");');
@@ -230,16 +237,8 @@ var Resultados = new Phaser.Class({
 	
 		eval('var Destaque' + y + ' = this.add.image(1260, 650, "iHealth");');
 		eval('var Texto' + y + ' = this.add.text(1425, 450, "Data: daqui 3 meses \\n\\nDistância: ' + parseFloat(medDistancia).toFixed(2) + ' m\\n\\nTempo: ' + medHoras + ' h ' + medMinutos +' m\\n\\nVelocidade: ' + parseFloat(medVelocidade).toFixed(2) + ' k/h\\n\\nGasto calórico: ' + medCalorias + '", infos);');
-		//eval('alert(Texto' + qtdCaminhadas + '.text);');
-		//eval('var Coracao' + y + ' = this.add.image(' + posCoracao + ', 950, "coracao");');
-		//eval('var Pulmao' + y + ' = this.add.image(' + posPulmao + ', 950, "pulmao");');
-		//eval('var Balanca' + y + ' = this.add.image(' + posBalanca + ', 950, "balanca");');
-		
     	eval('this.grpCaminhadas.add(Destaque' + y + ');');
     	eval('this.grpCaminhadas.add(Texto' + y + ');');
-    	//eval('this.grpCaminhadas.add(Coracao' + y + ');');
-    	//eval('this.grpCaminhadas.add(Pulmao' + y + ');');
-    	//eval('this.grpCaminhadas.add(Balanca' + y + ');');
 
 		this.mostraBarra(meta, -1, 1395);
     },
@@ -282,22 +281,6 @@ var Resultados = new Phaser.Class({
     
     },
     
-    converteMes: function (mes)
-    {
-    	if (mes == 'Jan') return '01';
-    	if (mes == 'Feb') return '02';
-    	if (mes == 'Mar') return '03';
-    	if (mes == 'Apr') return '04';
-    	if (mes == 'May') return '05';
-    	if (mes == 'Jun') return '06';
-    	if (mes == 'Jul') return '07';
-    	if (mes == 'Aug') return '08';
-    	if (mes == 'Sep') return '09';
-    	if (mes == 'Oct') return '10';
-    	if (mes == 'Nov') return '11';
-    	if (mes == 'Dec') return '12';
-    },
-
 	getDistanceFromLatLonInKm: function (position1, position2) {
     	"use strict";
     	var deg2rad = function (deg) { return deg * (Math.PI / 180); },
@@ -347,8 +330,9 @@ var Resultados = new Phaser.Class({
 		//--- barra de progressão da caminhada ---
 		if (distancia > 0) {
 			eval('var progressBox' + qtdCaminhadas + ' = this.add.graphics();');
-			var porcentagem = (distancia*100)/meta;		
+			var porcentagem = (distancia*100)/meta;
 			var compBarra   = (parseInt(porcentagem*330)/100) + 200;
+			if (compBarra > 530) compBarra = 530;
 	
 			eval('progressBox' + qtdCaminhadas + '.fillStyle(0xffffff, 0.8);');
 			eval('progressBox' + qtdCaminhadas + '.fillRect(210, 320, compBarra, 50);');
